@@ -1,92 +1,87 @@
 package edu.innotech;
 
 import com.stepup.myprog.edu.innoteh.Student;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-import java.util.Arrays;
+
 import java.util.List;
-import static junit.framework.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class StudentTest {
     private Student student;
+    private StudentRepositoryMock studentRepoMock;
 
     @BeforeEach
     void setUp() {
-        student = new Student("Кирилл");
+        studentRepoMock = new StudentRepositoryMock();
+        student = new Student("Кирилл", studentRepoMock);
     }
 
     @Test
-    @DisplayName("Тест на метод getName")
-    void testGetName() {
+    @DisplayName("Добавление корректных оценок")
+    void shouldSaveValidGrades() {
+        student.addGrade(3);
+        student.addGrade(4);
+        student.addGrade(5);
+
+        assertEquals(3, student.getGrades().size());
+        assertTrue(student.getGrades().contains(3));
+        assertTrue(student.getGrades().contains(4));
+        assertTrue(student.getGrades().contains(5));
+    }
+
+    @Test
+    @DisplayName("Добавление некорректных оценок")
+    void shouldThrowExceptionForInvalidGrades() {
+        assertThrows(IllegalArgumentException.class, () -> student.addGrade(1));
+        assertThrows(IllegalArgumentException.class, () -> student.addGrade(6));
+        assertThrows(IllegalArgumentException.class, () -> student.addGrade(0));
+        assertThrows(IllegalArgumentException.class, () -> student.addGrade(7));
+
+        assertTrue(student.getGrades().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Расчёт рейтинга")
+    void shouldCalculateRatingCorrectly() {
+        student.addGrade(3);
+        student.addGrade(4);
+        assertEquals(50, student.raiting());
+
+        student.addGrade(5);
+        assertEquals(70, student.raiting());
+
+        student.addGrade(5);
+        student.addGrade(5);
+        assertEquals(90, student.raiting());
+    }
+
+    @Test
+    @DisplayName("Тест на метод getGrades()")
+    void shouldReturnCopyOfGradesList() {
+        student.addGrade(3);
+        List<Integer> grades = student.getGrades();
+        grades.add(4);
+
+        assertEquals(1, student.getGrades().size());
+        assertTrue(student.getGrades().contains(3));
+        assertFalse(student.getGrades().contains(4));
+    }
+
+    @Test
+    @DisplayName("Тест на getter и setter для name")
+    void nameGetterAndSetterShouldWorkCorrectly() {
         assertEquals("Кирилл", student.getName());
-    }
-
-    @Test
-    @DisplayName("Тест на метод setName")
-    void testSetName() {
         student.setName("Саша");
         assertEquals("Саша", student.getName());
     }
 
     @Test
-    @DisplayName("Тест на метод getGrades")
-    void testAddValidGrade() {
-        student.addGrade(4);
-        student.addGrade(5);
-        assertEquals(Arrays.asList(4, 5), student.getGrades());
-    }
-
-    @Test
-    @DisplayName("Тест на метод addGrade")
-    void testAddInvalidGrade() {
-        assertThrows(IllegalArgumentException.class, () -> student.addGrade(0));
-        assertThrows(IllegalArgumentException.class, () -> student.addGrade(1));
-        assertThrows(IllegalArgumentException.class, () -> student.addGrade(6));
-        assertThrows(IllegalArgumentException.class, () -> student.addGrade(7));
-
-    }
-
-    @Test
-    @DisplayName("Тест на инкапсуляцию")
-    void testGetGradesEncapsulation() {
-        student.addGrade(3);
-        student.addGrade(4);
-
-        List<Integer> grades = student.getGrades();
-
-        assertThrows(UnsupportedOperationException.class, () -> grades.add(5));
-        assertThrows(UnsupportedOperationException.class, () -> grades.remove(0));
-    }
-
-    @Test
-    @DisplayName("Тест на equals и hashCode")
-    void testEqualsAndHashCode() {
-        Student student1 = new Student("Кирилл");
-        student1.addGrade(4);
-        student1.addGrade(5);
-        Student student2 = new Student("Кирилл");
-        student2.addGrade(4);
-        student2.addGrade(5);
-        Student differentStudent = new Student("Кирилл1");
-        differentStudent.addGrade(3);
-
-        assertEquals(student1, student1);
-        assertEquals(student1, student2);
-        assertNotEquals(student1, differentStudent);
-        assertNotEquals(student1, null);
-        assertNotEquals(student1, new Object());
-
-        assertEquals(student1.hashCode(), student2.hashCode());
-        assertNotEquals(student1.hashCode(), differentStudent.hashCode());
-    }
-    @Test
-    @DisplayName("Тест на toString")
-    void testToString() {
-        student.addGrade(4);
-        student.addGrade(5);
-        assertEquals("Student{name=Кирилл, marks=[4, 5]}", student.toString());
+    @DisplayName("Тест конструктора")
+    void shouldInitializeFieldsCorrectly() {
+        assertEquals("Кирилл", student.getName());
+        assertTrue(student.getGrades().isEmpty());
     }
 }

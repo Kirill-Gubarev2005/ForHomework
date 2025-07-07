@@ -1,64 +1,38 @@
 package com.stepup.myprog.edu.innoteh;
+
+import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Collections;
 
+@ToString
+@EqualsAndHashCode
 public class Student {
+    @Getter
+    @Setter
     private String name;
-    private final List<Integer> grades = new ArrayList<>();
+    private List<Integer> grades = new ArrayList<>();
+    private final StudentRepo studentRepo;
 
-    public Student(String name) {
+    public Student(String name, StudentRepo studentRepo) {
         this.name = name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
+        this.studentRepo = studentRepo;
     }
 
     public List<Integer> getGrades() {
-        return Collections.unmodifiableList(grades);
+        return new ArrayList<>(grades);
     }
 
+    @SneakyThrows
     public void addGrade(int grade) {
-        if (grade < 2 || grade > 5) {
+        if (!studentRepo.checkGrade(grade)) {
             throw new IllegalArgumentException(grade + " is wrong grade");
         }
         grades.add(grade);
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 13 * hash + Objects.hashCode(this.name);
-        hash = 13 * hash + Objects.hashCode(this.grades);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Student other = (Student) obj;
-        if (!Objects.equals(this.name, other.name)) {
-            return false;
-        }
-        return Objects.equals(this.grades, other.grades);
-    }
-
-    @Override
-    public String toString() {
-        return "Student{" + "name=" + name + ", marks=" + grades + '}';
+    @SneakyThrows
+    public int raiting() {
+        int sum = grades.stream().mapToInt(x -> x).sum();
+        return studentRepo.getRaintingForGradeSum(sum);
     }
 }
