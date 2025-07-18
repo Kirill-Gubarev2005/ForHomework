@@ -5,7 +5,9 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
 import static io.restassured.RestAssured.*;
+import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class StudentRestTests {
 
@@ -47,6 +49,62 @@ public class StudentRestTests {
                 .body("id", equalTo(1))
                 .body("name", equalTo("Кирилл"))
                 .body("marks", hasSize(3));
+
+        given()
+                .when()
+                .delete("/student/1")
+                .then()
+                .statusCode(200);
+    }
+    @Test
+    @DisplayName("POST /student - добавление нового студента оценки пустые")
+    public void postStudentEmptyMarks() {
+        String studentJson = "{\"id\": 1, \"name\": \"Кирилл\", \"marks\": []}";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(studentJson)
+                .when()
+                .post("/student")
+                .then()
+                .statusCode(201);
+
+        given()
+                .when()
+                .get("/student/1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo(1))
+                .body("name", equalTo("Кирилл"))
+                .body("marks", empty());
+
+        given()
+                .when()
+                .delete("/student/1")
+                .then()
+                .statusCode(200);
+    }
+    @Test
+    @DisplayName("POST /student - добавление нового студента оценки null")
+    public void postStudentMarksIsNull() {
+        String studentJson = "{\"id\": 1, \"name\": \"Кирилл\", \"marks\": null}";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(studentJson)
+                .when()
+                .post("/student")
+                .then()
+                .statusCode(201);
+
+        given()
+                .when()
+                .get("/student/1")
+                .then()
+                .statusCode(200)
+                .body("id", equalTo(1))
+                .body("name", equalTo("Кирилл"))
+                .body("marks", empty());
 
         given()
                 .when()
@@ -123,6 +181,8 @@ public class StudentRestTests {
                 .statusCode(201);
 
         String responseBody = response.getBody().asString();
+        assertFalse(responseBody.isEmpty());
+        assertTrue(responseBody.matches("\\d+"));
         int studentId = Integer.parseInt(responseBody.trim());
 
         given()
@@ -136,7 +196,20 @@ public class StudentRestTests {
     @Test
     @DisplayName("POST /student - возвращает 400 при пустом имени")
     public void postStudentWithEmptyName() {
-        String invalidStudentJson = "{\"id\": 2, \"name\": null\"\", \"marks\": [5, 4, 5]}";
+        String invalidStudentJson = "{\"id\": 2, \"name\": null, \"marks\": [5, 4, 5]}";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(invalidStudentJson)
+                .when()
+                .post("/student")
+                .then()
+                .statusCode(400);
+    }
+    @Test
+    @DisplayName("POST /student - возвращает 400 при некорректном Id (строке)")
+    public void postStudentWithEmptyID() {
+        String invalidStudentJson = "{\"id\": \"Id\", \"name\": \"Кирилл\", \"marks\": [5, 4, 5]}";
 
         given()
                 .contentType(ContentType.JSON)
@@ -147,6 +220,19 @@ public class StudentRestTests {
                 .statusCode(400);
     }
 
+    @Test
+    @DisplayName("POST /student - возвращает 400 при некорректных Marks String")
+    public void postStudentWithEmptyMarks() {
+        String invalidStudentJson = "{\"id\": 1, \"name\": \"Кирилл\", \"marks\": [five, four, two]}";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(invalidStudentJson)
+                .when()
+                .post("/student")
+                .then()
+                .statusCode(400);
+    }
     @Test
     @DisplayName("DELETE /student/{id} - удаление существующего студента")
     public void deleteStudent() {
@@ -250,8 +336,8 @@ public class StudentRestTests {
     @Test
     @DisplayName("GET /topStudent - возвращает нескольких студентов при равных условиях")
     public void getTopStudentReturnsMultiple() {
-        String student1Json = "{\"id\": 1, \"name\": \"Первый\", \"marks\": [5, 5, 5]}";
-        String student2Json = "{\"id\": 2, \"name\": \"Второй\", \"marks\": [5, 5, 5]}";
+        String student1Json = "{\"id\": 1, \"name\": \"Первый\", \"marks\": [5, 4, 5]}";
+        String student2Json = "{\"id\": 2, \"name\": \"Второй\", \"marks\": [5, 5, 4]}";
         given().contentType(ContentType.JSON).body(student1Json).post("/student");
         given().contentType(ContentType.JSON).body(student2Json).post("/student");
 
